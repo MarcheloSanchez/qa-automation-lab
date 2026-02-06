@@ -1,0 +1,5 @@
+robotframework==7.*
+robotframework-browser==18.*
+requests==2.*
+pytest==7.*
+pytest-html==3.*

@@ -1,0 +1,40 @@
+name: Smoke Tests
+
+on:
+  pull_request:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Start app
+        run: |
+          cd app/practice-software-testing
+          docker compose up -d
+          sleep 20
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: |
+          pip install -r requirements.txt
+          rfbrowser init
+
+      - name: Run smoke tests
+        run: |
+          robot -d output -i smoke --variable BASE_URL:http://localhost:8080 tests
+
+      - name: Upload artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: robot-output
+          path: output

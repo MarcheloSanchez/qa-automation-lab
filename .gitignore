@@ -1,0 +1,6 @@
+.venv/
+output/
+playwright-report/
+rfbrowser/
+node_modules/
+*.log
