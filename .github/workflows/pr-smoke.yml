@@ -28,6 +28,9 @@ jobs:
           pip install -r requirements.txt
           rfbrowser init
 
+      - name: Lint
+        run: ruff check tests/helpers/
+
       - name: Run smoke tests
         run: |
           robot -d output -i smoke --variable BASE_URL:http://localhost:8080 tests
