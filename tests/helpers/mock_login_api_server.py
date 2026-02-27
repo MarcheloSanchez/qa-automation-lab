@@ -26,10 +26,18 @@ class LoginApiHandler(BaseHTTPRequestHandler):
 
         content_length = int(self.headers.get("Content-Length", "0"))
         request_body = self.rfile.read(content_length).decode("utf-8")
-        payload = json.loads(request_body or "{}")
+        try:
+            payload = json.loads(request_body or "{}")
+        except json.JSONDecodeError:
+            self._send_json(400, {"error": "invalid JSON"})
+            return
 
         email = payload.get("email")
         password = payload.get("password")
+
+        if not email or not password:
+            self._send_json(422, {"error": "email and password are required"})
+            return
 
         if email == "customer@practicesoftwaretesting.com" and password == "welcome01":
             self._send_json(200, {"access_token": "access-token-value"})

@@ -41,6 +41,37 @@ Login With Invalid Credentials Is Rejected
     Should Be Equal As Integers    ${payload}[status_code]    401
     Should Be Equal    ${payload}[token]    ${EMPTY}
 
+Login With Empty Email Is Rejected
+    ${payload}=    Execute Login Request    ${EMPTY}    ${VALID_PASSWORD}
+    ${allowed}=    Create List    400    422
+    List Should Contain Value    ${allowed}    ${payload}[status_code]
+    Should Be Equal    ${payload}[token]    ${EMPTY}
+
+Login With Empty Password Is Rejected
+    ${payload}=    Execute Login Request    customer@practicesoftwaretesting.com    ${EMPTY}
+    ${allowed}=    Create List    400    422
+    List Should Contain Value    ${allowed}    ${payload}[status_code]
+    Should Be Equal    ${payload}[token]    ${EMPTY}
+
+Login With Both Fields Empty Is Rejected
+    ${payload}=    Execute Login Request    ${EMPTY}    ${EMPTY}
+    ${allowed}=    Create List    400    422
+    List Should Contain Value    ${allowed}    ${payload}[status_code]
+    Should Be Equal    ${payload}[token]    ${EMPTY}
+
+Login With SQL Injection In Email Is Rejected
+    ${payload}=    Execute Login Request    ' OR '1'='1    ${VALID_PASSWORD}
+    ${allowed}=    Create List    400    401    422
+    List Should Contain Value    ${allowed}    ${payload}[status_code]
+    Should Be Equal    ${payload}[token]    ${EMPTY}
+
+Login With Very Long Email Is Rejected
+    ${long_email}=    Evaluate    "a" * 500 + "@test.com"
+    ${payload}=    Execute Login Request    ${long_email}    ${VALID_PASSWORD}
+    ${allowed}=    Create List    400    401    413    422
+    List Should Contain Value    ${allowed}    ${payload}[status_code]
+    Should Be Equal    ${payload}[token]    ${EMPTY}
+
 *** Keywords ***
 Start Mock API
     Start Process    python    ${MOCK_SERVER}    alias=mock_api
