@@ -14,5 +14,5 @@ Open Login Page
 Login With Credentials
     [Arguments]    ${email}    ${password}
     Fill Text      ${EMAIL_INPUT}    ${email}
-    Fill Text      ${PASSWORD_INPUT} ${password}
+    Fill Text      ${PASSWORD_INPUT}    ${password}
     Click          ${LOGIN_BUTTON}

@@ -19,26 +19,26 @@ Invalid Credentials Shows Error Message
     [Tags]    ui    login    negative
     Open Login Page
     Login With Credentials    ${INVALID_EMAIL}    ${INVALID_PASSWORD}
-    Wait For Element And Get Text    ${ERROR_MESSAGE}
+    ${error}=    Wait For Element And Get Text    ${ERROR_MESSAGE}
+    Should Contain    ${error}    Invalid    msg=Expected "Invalid" in error text, got: ${error}
 
 Wrong Password For Valid Account Shows Error
     [Tags]    ui    login    negative
     Open Login Page
     Login With Credentials    ${VALID_EMAIL}    ${INVALID_PASSWORD}
-    Wait For Element And Get Text    ${ERROR_MESSAGE}
+    ${error}=    Wait For Element And Get Text    ${ERROR_MESSAGE}
+    Should Contain    ${error}    Invalid    msg=Expected "Invalid" in error text, got: ${error}
 
 Empty Email Shows Error
     [Tags]    ui    login    negative
     Open Login Page
     Login With Credentials    ${EMPTY}    ${VALID_PASSWORD}
-    ${visible}=    Run Keyword And Return Status
-    ...    Wait For Elements State    ${ERROR_MESSAGE}    visible    timeout=3s
-    Should Be True    ${visible}    Expected an error message for empty email
+    ${error}=    Wait For Element And Get Text    ${ERROR_MESSAGE}
+    Should Not Be Empty    ${error}    Expected a non-empty error message for empty email
 
 Empty Password Shows Error
     [Tags]    ui    login    negative
     Open Login Page
     Login With Credentials    ${VALID_EMAIL}    ${EMPTY}
-    ${visible}=    Run Keyword And Return Status
-    ...    Wait For Elements State    ${ERROR_MESSAGE}    visible    timeout=3s
-    Should Be True    ${visible}    Expected an error message for empty password
+    ${error}=    Wait For Element And Get Text    ${ERROR_MESSAGE}
+    Should Not Be Empty    ${error}    Expected a non-empty error message for empty password
