@@ -92,7 +92,7 @@ def main() -> int:
     if args.mode == "reachability":
         return check_reachability(session, args.base_url)
 
-    if not args.email or not args.password:
+    if args.email is None or args.password is None:
         raise SystemExit("--email and --password are required for login mode")
 
     result = execute_login(session, args.base_url, args.email, args.password)
