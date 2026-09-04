@@ -1,5 +1,6 @@
 *** Settings ***
 Library    Browser
+Resource    ../variables/env.resource
 
 *** Variables ***
 ${EMAIL_INPUT}       css=input[data-test="email"]
@@ -13,6 +14,6 @@ Open Login Page
 
 Login With Credentials
     [Arguments]    ${email}    ${password}
-    Fill Text      ${EMAIL_INPUT}    ${email}
-    Fill Text      ${PASSWORD_INPUT} ${password}
+    Fill Text      ${EMAIL_INPUT}       ${email}
+    Fill Text      ${PASSWORD_INPUT}    ${password}
     Click          ${LOGIN_BUTTON}
