@@ -16,7 +16,17 @@ jobs:
         run: |
           cd app/practice-software-testing
           docker compose up -d
-          sleep 20
+          echo "Waiting for the app to become ready on http://localhost:4200 ..."
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:4200 >/dev/null; then
+              echo "App is ready."
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "App did not become ready in time." >&2
+          docker compose logs
+          exit 1
 
       - name: Set up Python
         uses: actions/setup-python@v5
