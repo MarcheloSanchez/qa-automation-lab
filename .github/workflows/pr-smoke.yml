@@ -30,7 +30,7 @@ jobs:
 
       - name: Run smoke tests
         run: |
-          robot -d output -i smoke --variable BASE_URL:http://localhost:8080 tests
+          robot -d output -i smoke --variable BASE_URL:http://localhost:4200 tests
 
       - name: Upload artifacts
         if: failure()
