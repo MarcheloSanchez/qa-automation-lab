@@ -12,9 +12,10 @@ Test Setup        Open Login Page
 Successful Login Redirects Away From Login Page
     [Tags]    smoke    ui    login
     Login With Credentials    ${VALID_EMAIL}    ${VALID_PASSWORD}
-    Wait For Elements State    ${ERROR_MESSAGE}    hidden    timeout=5s
-    ${url}=    Get Url
-    Should Not Contain    ${url}    /login
+    # handleSuccessfulLogin() redirects via a real window.location.href
+    # assignment (a full page navigation), so give it time to land instead
+    # of reading the URL immediately after the click.
+    Get Url    not contains    /login
 
 Invalid Login Shows Error Message
     [Tags]    smoke    ui    login
