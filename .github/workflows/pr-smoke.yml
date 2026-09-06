@@ -15,6 +15,16 @@ jobs:
       - name: Start app
         run: |
           cd app/practice-software-testing
+
+          # api.docker hardcodes 'usermod -u 1000 www-data' so php-fpm's
+          # user matches a typical local dev machine's own UID on a
+          # bind-mounted volume. GitHub Actions runners check out the repo
+          # under a different UID, so www-data can't write to the
+          # bind-mounted storage/ (logs, cache, sessions) at all - Laravel
+          # silently fails to even log the resulting exception, producing
+          # an empty 500 for any request that needs to write there.
+          chmod -R 777 "${SPRINT:-sprint5}/API/storage" "${SPRINT:-sprint5}/API/bootstrap/cache"
+
           docker compose up -d
 
           # 'cron' runs the app's own scheduler every minute
