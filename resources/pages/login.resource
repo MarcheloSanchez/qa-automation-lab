@@ -21,3 +21,15 @@ Login With Credentials
     Fill Text      ${EMAIL_INPUT}       ${email}
     Fill Text      ${PASSWORD_INPUT}    ${password}
     Click          ${LOGIN_BUTTON}
+
+Login With Credentials And Capture Response
+    [Documentation]    Same as "Login With Credentials" but returns the
+    ...    actual /users/login HTTP response (status, body) for diagnosis,
+    ...    instead of only observing what the UI does with it.
+    [Arguments]    ${email}    ${password}
+    ${promise}=    Promise To Wait For Response    matcher=**/users/login    timeout=15s
+    Fill Text      ${EMAIL_INPUT}       ${email}
+    Fill Text      ${PASSWORD_INPUT}    ${password}
+    Click          ${LOGIN_BUTTON}
+    ${response}=    Wait For    ${promise}
+    RETURN    ${response}
