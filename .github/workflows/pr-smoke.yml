@@ -57,6 +57,18 @@ jobs:
           fi
           echo "Database migrated and seeded."
 
+          echo "--- Diagnostic: raw login POST for valid creds (bypasses browser CORS) ---"
+          curl -si -X POST http://localhost:8091/users/login \
+            -H "Content-Type: application/json" \
+            -H "Origin: http://localhost:4200" \
+            -d '{"email":"customer@practicesoftwaretesting.com","password":"welcome01"}' || true
+          echo ""
+          echo "--- Diagnostic: CORS preflight for /users/login ---"
+          curl -si -X OPTIONS http://localhost:8091/users/login \
+            -H "Origin: http://localhost:4200" \
+            -H "Access-Control-Request-Method: POST" \
+            -H "Access-Control-Request-Headers: content-type" || true
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
