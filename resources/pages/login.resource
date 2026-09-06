@@ -5,12 +5,12 @@ Resource    ../variables/env.resource
 *** Variables ***
 ${EMAIL_INPUT}       css=input[data-test="email"]
 ${PASSWORD_INPUT}    css=input[data-test="password"]
-${LOGIN_BUTTON}      css=button[data-test="login-submit"]
-${ERROR_MESSAGE}     css=.alert-danger
+${LOGIN_BUTTON}      css=[data-test="login-submit"]
+${ERROR_MESSAGE}     css=[data-test="login-error"]
 
 *** Keywords ***
 Open Login Page
-    New Page    ${BASE_URL}/login
+    New Page    ${BASE_URL}/auth/login
     # ng serve compiles each route lazily on first request, so the form
     # can take much longer than Browser's default 10s action timeout to
     # actually render on a cold dev server.

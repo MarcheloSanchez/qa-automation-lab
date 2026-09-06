@@ -16,12 +16,13 @@ jobs:
         run: |
           cd app/practice-software-testing
           docker compose up -d
-          echo "Waiting for the app to become ready on http://localhost:4200/login ..."
-          # Also curl /login itself (not just /): ng serve JIT-compiles each
-          # route lazily on first request, so warm it up here rather than
-          # paying that compile time inside the test's own action timeouts.
+          echo "Waiting for the app to become ready on http://localhost:4200/auth/login ..."
+          # Also curl the login route itself (not just /): ng serve
+          # JIT-compiles each route lazily on first request, so warm it up
+          # here rather than paying that compile time inside the test's
+          # own action timeouts.
           for i in $(seq 1 60); do
-            if curl -sf http://localhost:4200/login >/dev/null; then
+            if curl -sf http://localhost:4200/auth/login >/dev/null; then
               echo "App is ready."
               exit 0
             fi
