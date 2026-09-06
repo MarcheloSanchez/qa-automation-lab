@@ -11,6 +11,10 @@ ${ERROR_MESSAGE}     css=.alert-danger
 *** Keywords ***
 Open Login Page
     New Page    ${BASE_URL}/login
+    # ng serve compiles each route lazily on first request, so the form
+    # can take much longer than Browser's default 10s action timeout to
+    # actually render on a cold dev server.
+    Wait For Elements State    ${EMAIL_INPUT}    visible    timeout=60s
 
 Login With Credentials
     [Arguments]    ${email}    ${password}
