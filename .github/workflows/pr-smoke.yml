@@ -68,6 +68,9 @@ jobs:
             -H "Origin: http://localhost:4200" \
             -H "Access-Control-Request-Method: POST" \
             -H "Access-Control-Request-Headers: content-type" || true
+          echo ""
+          echo "--- Diagnostic: laravel.log tail (the POST above returned 500 with an empty body) ---"
+          docker compose exec -T laravel-api tail -n 100 storage/logs/laravel.log || true
 
       - name: Set up Python
         uses: actions/setup-python@v5
