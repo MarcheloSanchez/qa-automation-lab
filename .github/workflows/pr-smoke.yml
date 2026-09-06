@@ -15,8 +15,88 @@ jobs:
       - name: Start app
         run: |
           cd app/practice-software-testing
+
+          # api.docker hardcodes 'usermod -u 1000 www-data' so php-fpm's
+          # user matches a typical local dev machine's own UID on a
+          # bind-mounted volume. GitHub Actions runners check out the repo
+          # under a different UID, so www-data can't write to the
+          # bind-mounted storage/ (logs, cache, sessions) at all - Laravel
+          # silently fails to even log the resulting exception, producing
+          # an empty 500 for any request that needs to write there.
+          chmod -R 777 "${SPRINT:-sprint5}/API/storage" "${SPRINT:-sprint5}/API/bootstrap/cache"
+
           docker compose up -d
-          sleep 20
+
+          # 'cron' runs the app's own scheduler every minute
+          # (invoice:generate, queue:work) unconditionally, sharing the
+          # laravel-api container's log/volume. It has repeatedly
+          # contaminated our diagnostics (and could race migrate:fresh
+          # while it's dropping/recreating tables), and CI has no need
+          # for periodic demo-data upkeep - stop it so it can't interfere.
+          docker compose stop cron
+
+          echo "Waiting for the app to become ready on http://localhost:4200/auth/login ..."
+          # Also curl the login route itself (not just /): ng serve
+          # JIT-compiles each route lazily on first request, so warm it up
+          # here rather than paying that compile time inside the test's
+          # own action timeouts.
+          ready=false
+          for i in $(seq 1 60); do
+            if curl -sf http://localhost:4200/auth/login >/dev/null; then
+              ready=true
+              break
+            fi
+            sleep 5
+          done
+          if [ "$ready" != true ]; then
+            echo "App did not become ready in time." >&2
+            docker compose logs
+            exit 1
+          fi
+          echo "Frontend is ready."
+
+          # docker compose up alone never creates the schema or seeds any
+          # users - the project's own docs require this as a separate step
+          # (see README.md 'Roll Back - Run Migrations - Seed Database').
+          # Retry since mariadb/laravel-api may still be starting.
+          echo "Running migrations and seeding the database..."
+          migrated=false
+          for i in $(seq 1 30); do
+            if docker compose exec -T laravel-api php artisan migrate:fresh --seed; then
+              migrated=true
+              break
+            fi
+            sleep 5
+          done
+          if [ "$migrated" != true ]; then
+            echo "Migration/seed did not succeed in time." >&2
+            docker compose logs
+            exit 1
+          fi
+          echo "Database migrated and seeded."
+
+          # laravel.log is shared with the 'cron' container's own scheduled
+          # artisan commands (invoice:generate, queue:work run every
+          # minute), which drowns out our own request's entry. Truncate
+          # first so the log only contains what our request itself logs.
+          docker compose exec -T laravel-api sh -c 'truncate -s 0 storage/logs/laravel.log' || true
+
+          echo "--- Diagnostic: raw login POST for valid creds (bypasses browser CORS) ---"
+          curl -si -X POST http://localhost:8091/users/login \
+            -H "Content-Type: application/json" \
+            -H "Origin: http://localhost:4200" \
+            -d '{"email":"customer@practicesoftwaretesting.com","password":"welcome01"}' || true
+          echo ""
+          echo "--- Diagnostic: CORS preflight for /users/login ---"
+          curl -si -X OPTIONS http://localhost:8091/users/login \
+            -H "Origin: http://localhost:4200" \
+            -H "Access-Control-Request-Method: POST" \
+            -H "Access-Control-Request-Headers: content-type" || true
+          echo ""
+          echo "--- Diagnostic: laravel.log since the truncate above ---"
+          docker compose exec -T laravel-api cat storage/logs/laravel.log || true
+          echo "--- Diagnostic: laravel-api container stdout/stderr (in case the 500 never reaches Laravel's own logger) ---"
+          docker compose logs --tail=50 laravel-api || true
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -30,7 +110,7 @@ jobs:
 
       - name: Run smoke tests
         run: |
-          robot -d output -i smoke --variable BASE_URL:http://localhost:8080 tests
+          robot -d output -i smoke --variable BASE_URL:http://localhost:4200 tests
 
       - name: Upload artifacts
         if: failure()
