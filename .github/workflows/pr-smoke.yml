@@ -17,6 +17,14 @@ jobs:
           cd app/practice-software-testing
           docker compose up -d
 
+          # 'cron' runs the app's own scheduler every minute
+          # (invoice:generate, queue:work) unconditionally, sharing the
+          # laravel-api container's log/volume. It has repeatedly
+          # contaminated our diagnostics (and could race migrate:fresh
+          # while it's dropping/recreating tables), and CI has no need
+          # for periodic demo-data upkeep - stop it so it can't interfere.
+          docker compose stop cron
+
           echo "Waiting for the app to become ready on http://localhost:4200/auth/login ..."
           # Also curl the login route itself (not just /): ng serve
           # JIT-compiles each route lazily on first request, so warm it up
@@ -75,8 +83,10 @@ jobs:
             -H "Access-Control-Request-Method: POST" \
             -H "Access-Control-Request-Headers: content-type" || true
           echo ""
-          echo "--- Diagnostic: laravel.log since the truncate above (isolates our own request) ---"
+          echo "--- Diagnostic: laravel.log since the truncate above ---"
           docker compose exec -T laravel-api cat storage/logs/laravel.log || true
+          echo "--- Diagnostic: laravel-api container stdout/stderr (in case the 500 never reaches Laravel's own logger) ---"
+          docker compose logs --tail=50 laravel-api || true
 
       - name: Set up Python
         uses: actions/setup-python@v5
