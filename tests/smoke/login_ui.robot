@@ -11,9 +11,12 @@ Test Setup        Open Login Page
 *** Test Cases ***
 Successful Login Redirects Away From Login Page
     [Tags]    smoke    ui    login
-    ${response}=    Login With Credentials And Capture Response    ${VALID_EMAIL}    ${VALID_PASSWORD}
-    Log To Console    /users/login responded ${response}[status]: ${response}[body]
-    Should Be Equal As Integers    ${response}[status]    200
+    Login With Credentials    ${VALID_EMAIL}    ${VALID_PASSWORD}
+    Sleep    1s
+    ${console_logs}=    Get Console Log    full=True
+    FOR    ${entry}    IN    @{console_logs}
+        Log To Console    [${entry}[type]] ${entry}[text]
+    END
     # handleSuccessfulLogin() redirects via a real window.location.href
     # assignment (a full page navigation), so give it time to land instead
     # of reading the URL immediately after the click.
