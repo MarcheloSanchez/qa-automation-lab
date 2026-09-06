@@ -57,6 +57,12 @@ jobs:
           fi
           echo "Database migrated and seeded."
 
+          # laravel.log is shared with the 'cron' container's own scheduled
+          # artisan commands (invoice:generate, queue:work run every
+          # minute), which drowns out our own request's entry. Truncate
+          # first so the log only contains what our request itself logs.
+          docker compose exec -T laravel-api sh -c 'truncate -s 0 storage/logs/laravel.log' || true
+
           echo "--- Diagnostic: raw login POST for valid creds (bypasses browser CORS) ---"
           curl -si -X POST http://localhost:8091/users/login \
             -H "Content-Type: application/json" \
@@ -69,8 +75,8 @@ jobs:
             -H "Access-Control-Request-Method: POST" \
             -H "Access-Control-Request-Headers: content-type" || true
           echo ""
-          echo "--- Diagnostic: laravel.log tail (the POST above returned 500 with an empty body) ---"
-          docker compose exec -T laravel-api tail -n 100 storage/logs/laravel.log || true
+          echo "--- Diagnostic: laravel.log since the truncate above (isolates our own request) ---"
+          docker compose exec -T laravel-api cat storage/logs/laravel.log || true
 
       - name: Set up Python
         uses: actions/setup-python@v5
