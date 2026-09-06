@@ -27,7 +27,7 @@ Login With Credentials And Capture Response
     ...    actual /users/login HTTP response (status, body) for diagnosis,
     ...    instead of only observing what the UI does with it.
     [Arguments]    ${email}    ${password}
-    ${promise}=    Promise To Wait For Response    matcher=**/users/login    timeout=15s
+    ${promise}=    Promise To    Wait For Response    matcher=**/users/login    timeout=15s
     Fill Text      ${EMAIL_INPUT}       ${email}
     Fill Text      ${PASSWORD_INPUT}    ${password}
     Click          ${LOGIN_BUTTON}
