@@ -15,8 +15,37 @@ jobs:
       - name: Start app
         run: |
           cd app/practice-software-testing
+
+          # api.docker hardcodes 'usermod -u 1000 www-data' so php-fpm's
+          # user matches a typical local dev machine's own UID on a
+          # bind-mounted volume. GitHub Actions runners check out the repo
+          # under a different UID, so www-data can't write to the
+          # bind-mounted storage/ (logs, cache, sessions) - Laravel then
+          # fails every request that needs to write there.
+          chmod -R 777 "${SPRINT:-sprint5}/API/storage" "${SPRINT:-sprint5}/API/bootstrap/cache"
+
           docker compose up -d
-          sleep 20
+
+          echo "Waiting for the API to become ready on http://localhost:8091/status ..."
+          ready=false
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8091/status >/dev/null; then
+              ready=true
+              break
+            fi
+            sleep 5
+          done
+          if [ "$ready" != true ]; then
+            echo "API did not become ready in time." >&2
+            docker compose logs
+            exit 1
+          fi
+
+          # docker compose up alone never creates the schema or seeds any
+          # users - the project's own docs require this as a separate step
+          # (see README.md 'Roll Back - Run Migrations - Seed Database').
+          echo "Running migrations and seeding the database..."
+          docker compose exec -T laravel-api php artisan migrate:fresh --seed
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -30,7 +59,7 @@ jobs:
 
       - name: Run smoke tests
         run: |
-          robot -d output -i smoke --variable BASE_URL:http://localhost:8080 tests
+          robot -d output -i smoke --variable API_BASE_URL:http://localhost:8091 tests
 
       - name: Upload artifacts
         if: failure()

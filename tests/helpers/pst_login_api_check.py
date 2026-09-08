@@ -24,13 +24,17 @@ def build_session() -> requests.Session:
 
 def check_reachability(session: requests.Session, base_url: str) -> int:
     try:
-        session.get(base_url, timeout=10).raise_for_status()
+        # The API has no route at "/" (404 there, on both the hosted and
+        # self-hosted instances) - probe the actual health route instead.
+        session.get(f"{base_url}/status", timeout=10).raise_for_status()
         return 0
     except requests.RequestException:
         return 1
 
 
-def execute_login(session: requests.Session, base_url: str, email: str, password: str) -> dict[str, Any]:
+def execute_login(
+    session: requests.Session, base_url: str, email: str, password: str
+) -> dict[str, Any]:
     response = session.post(
         f"{base_url}/users/login",
         json={"email": email, "password": password},
