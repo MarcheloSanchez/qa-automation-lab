@@ -18,7 +18,7 @@ Login API With Invalid Credentials Is Rejected
     [Tags]    smoke    login
     Skip If Api Is Unreachable
     ${result}=    Execute Login Request    ${INVALID_EMAIL}    ${INVALID_PASSWORD}
-    ${allowed}=    Create List    400    401    422
+    ${allowed}=    Create List    ${400}    ${401}    ${422}
     List Should Contain Value    ${allowed}    ${result}[status_code]
 
 *** Keywords ***
