@@ -12,6 +12,8 @@ Robot Framework lab testing [Practice Software Testing](https://github.com/tests
 - `resources/api/` – `PstApi.py` keyword library (one HTTP session, bearer tokens: `Api Request`,
   `Login Request`, `Get Token`) and `login_api.resource` built on it. Use these for new API tests;
   `tests/helpers/pst_login_api_check.py` is the old subprocess helper.
+- `tests/ui/` – Browser-library UI suites (tag `ui`, not `smoke`, so Bug Check doesn't use them as
+  controls). Run with `--variable BASE_URL:http://localhost:4200` after `WAIT_FOR_UI=true scripts/start_app.sh`.
 - `resources/pages/` – page-object keywords (Browser library). `resources/variables/` – shared variables
   (incl. seeded customer and admin credentials).
 
@@ -45,6 +47,8 @@ Seeded customer: `customer@practicesoftwaretesting.com` / `welcome01`.
 - Robot: separate keyword arguments with **at least two spaces** (one space silently merges them into
   one argument). Four-space indentation, `Title Case` keyword and test names.
 - Every test gets tags: suite type (`smoke`, `ui`) plus area (`login`, `cart`, ...).
+- The app submodule is pinned; bumping it can change behaviour that `bug:<id>` tests rely on. Re-check
+  those bugs in both versions' source when you bump it.
 - A test written to detect a known defect of `sprint5-with-bugs` gets `bug:<id>` (ID from
   `app/practice-software-testing/sprint5-with-bugs/testSessions/listOfBugs.md`). It must assert
   the *correct* behaviour, so it passes on `sprint5` and fails on the buggy version. Check the
@@ -64,7 +68,7 @@ Seeded customer: `customer@practicesoftwaretesting.com` / `welcome01`.
 
 - One roadmap item per branch and PR; keep PRs small. Never push to `main`.
 - CI: `checks.yml` (lint + helper suite, offline) and `pr-smoke.yml` (smoke suite against the
-  Docker app). Both must be green before merge. `bugcheck.yml` (manual, weekly, and on PRs that
+  Docker app; jobs `smoke` for API and `ui` for `tests/ui`). Both must be green before merge. `bugcheck.yml` (manual, weekly, and on PRs that
   touch tests) runs the smoke suite against `sprint5-with-bugs` and publishes the
   `scripts/bug_scorecard.py` report in the job summary.
 - Before touching `pr-smoke.yml`, check open PRs and `claude/*` / `codex/*` branches - CI fixes

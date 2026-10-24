@@ -2,6 +2,7 @@
 # Starts the Practice Software Testing app from the submodule and seeds it.
 # SPRINT selects the app version (default from the submodule's .env: sprint5),
 # e.g. SPRINT=sprint5-with-bugs scripts/start_app.sh
+# WAIT_FOR_UI=true also waits for the Angular UI on port 4200.
 set -euo pipefail
 
 cd "$(dirname "$0")/../app/practice-software-testing"
@@ -54,4 +55,23 @@ if [ "$migrated" != true ]; then
   echo "Migration/seed did not succeed in time." >&2
   docker compose logs
   exit 1
+fi
+
+# The UI (ng serve) builds long after the API is up. Requesting the login route
+# also warms it up, so the first UI test isn't spent on lazy compilation.
+if [ "${WAIT_FOR_UI:-false}" = true ]; then
+  echo "Waiting for the UI on http://localhost:4200/auth/login ..."
+  ui_ready=false
+  for i in $(seq 1 60); do
+    if curl -sf http://localhost:4200/auth/login >/dev/null; then
+      ui_ready=true
+      break
+    fi
+    sleep 5
+  done
+  if [ "$ui_ready" != true ]; then
+    echo "UI did not become ready in time." >&2
+    docker compose logs angular-ui
+    exit 1
+  fi
 fi
