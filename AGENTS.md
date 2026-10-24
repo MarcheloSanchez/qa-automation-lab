@@ -26,12 +26,12 @@ UI tests also need `rfbrowser init` (downloads Node deps and browsers; slow, run
 
 ```bash
 git submodule update --init --depth 1
-cd app/practice-software-testing
-chmod -R 777 sprint5/API/storage sprint5/API/bootstrap/cache   # www-data UID mismatch on bind mounts
-docker compose up -d
-docker compose stop cron                                       # scheduler noise, races migrations
-docker compose exec -T laravel-api php artisan migrate:fresh --seed   # compose never seeds; retry until DB is up
+scripts/start_app.sh                          # or: SPRINT=sprint5-with-bugs scripts/start_app.sh
 ```
+
+The script (also used by CI) fixes `storage/` permissions (www-data UID mismatch on bind mounts),
+starts compose, stops `cron` (it races migrations), waits for `/status` and runs
+`migrate:fresh --seed` with retries - compose alone never seeds the database.
 
 Ports: UI `http://localhost:4200`, API `http://localhost:8091` (health route `/status`; `/` returns 404).
 Seeded customer: `customer@practicesoftwaretesting.com` / `welcome01`.
@@ -41,6 +41,10 @@ Seeded customer: `customer@practicesoftwaretesting.com` / `welcome01`.
 - Robot: separate keyword arguments with **at least two spaces** (one space silently merges them into
   one argument). Four-space indentation, `Title Case` keyword and test names.
 - Every test gets tags: suite type (`smoke`, `ui`) plus area (`login`, `cart`, ...).
+- A test written to detect a known defect of `sprint5-with-bugs` gets `bug:<id>` (ID from
+  `app/practice-software-testing/sprint5-with-bugs/testSessions/listOfBugs.md`). It must assert
+  the *correct* behaviour, so it passes on `sprint5` and fails on the buggy version. Check the
+  buggy source before tagging - not every listed bug is present in the current code (e.g. #21).
 - Shared keywords go in `resources/`, not copied between suites.
 - Compare status codes as numbers (`${401}`), not strings.
 - Python: must pass `ruff check .`; type-hint new functions.
@@ -56,6 +60,7 @@ Seeded customer: `customer@practicesoftwaretesting.com` / `welcome01`.
 
 - One roadmap item per branch and PR; keep PRs small. Never push to `main`.
 - CI: `checks.yml` (lint + helper suite, offline) and `pr-smoke.yml` (smoke suite against the
-  Docker app). Both must be green before merge.
+  Docker app). Both must be green before merge. `bugcheck.yml` (manual + weekly) runs the smoke
+  suite against `sprint5-with-bugs` and publishes the `scripts/bug_scorecard.py` report.
 - Before touching `pr-smoke.yml`, check open PRs and `claude/*` / `codex/*` branches - CI fixes
   have been attempted in parallel before.

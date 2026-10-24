@@ -13,56 +13,7 @@ jobs:
           submodules: true
 
       - name: Start app
-        run: |
-          cd app/practice-software-testing
-
-          # api.docker hardcodes 'usermod -u 1000 www-data' so php-fpm's
-          # user matches a typical local dev machine's own UID on a
-          # bind-mounted volume. GitHub Actions runners check out the repo
-          # under a different UID, so www-data can't write to the
-          # bind-mounted storage/ (logs, cache, sessions) - Laravel then
-          # fails every request that needs to write there.
-          chmod -R 777 "${SPRINT:-sprint5}/API/storage" "${SPRINT:-sprint5}/API/bootstrap/cache"
-
-          docker compose up -d
-
-          # 'cron' runs the app's scheduler every minute against the same
-          # database; CI doesn't need it and it can race migrate:fresh.
-          docker compose stop cron
-
-          echo "Waiting for the API to become ready on http://localhost:8091/status ..."
-          ready=false
-          for i in $(seq 1 30); do
-            if curl -sf http://localhost:8091/status >/dev/null; then
-              ready=true
-              break
-            fi
-            sleep 5
-          done
-          if [ "$ready" != true ]; then
-            echo "API did not become ready in time." >&2
-            docker compose logs
-            exit 1
-          fi
-
-          # docker compose up alone never creates the schema or seeds any
-          # users - the project's own docs require this as a separate step
-          # (see README.md 'Roll Back - Run Migrations - Seed Database').
-          # Retry: mariadb may still be starting after the API answers.
-          echo "Running migrations and seeding the database..."
-          migrated=false
-          for i in $(seq 1 30); do
-            if docker compose exec -T laravel-api php artisan migrate:fresh --seed; then
-              migrated=true
-              break
-            fi
-            sleep 5
-          done
-          if [ "$migrated" != true ]; then
-            echo "Migration/seed did not succeed in time." >&2
-            docker compose logs
-            exit 1
-          fi
+        run: bash scripts/start_app.sh
 
       - name: Set up Python
         uses: actions/setup-python@v5
