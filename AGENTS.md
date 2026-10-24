@@ -17,7 +17,7 @@ Robot Framework lab testing [Practice Software Testing](https://github.com/tests
 pip install -r requirements.txt     # done automatically by the SessionStart hook in cloud sessions
 ruff check .                        # lint
 robot -d output tests/helpers       # offline helper suite - always runnable
-robot -d output -i smoke --variable API_BASE_URL:http://localhost:8091 tests   # needs the app running
+robot -d output -i smoke --variable API_BASE_URL:http://localhost:8091 --variable REQUIRE_API:true tests   # needs the app running
 ```
 
 UI tests also need `rfbrowser init` (downloads Node deps and browsers; slow, run only when needed).

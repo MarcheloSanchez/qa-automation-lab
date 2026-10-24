@@ -26,6 +26,10 @@ jobs:
 
           docker compose up -d
 
+          # 'cron' runs the app's scheduler every minute against the same
+          # database; CI doesn't need it and it can race migrate:fresh.
+          docker compose stop cron
+
           echo "Waiting for the API to become ready on http://localhost:8091/status ..."
           ready=false
           for i in $(seq 1 30); do
@@ -44,8 +48,21 @@ jobs:
           # docker compose up alone never creates the schema or seeds any
           # users - the project's own docs require this as a separate step
           # (see README.md 'Roll Back - Run Migrations - Seed Database').
+          # Retry: mariadb may still be starting after the API answers.
           echo "Running migrations and seeding the database..."
-          docker compose exec -T laravel-api php artisan migrate:fresh --seed
+          migrated=false
+          for i in $(seq 1 30); do
+            if docker compose exec -T laravel-api php artisan migrate:fresh --seed; then
+              migrated=true
+              break
+            fi
+            sleep 5
+          done
+          if [ "$migrated" != true ]; then
+            echo "Migration/seed did not succeed in time." >&2
+            docker compose logs
+            exit 1
+          fi
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -55,14 +72,18 @@ jobs:
       - name: Install deps
         run: |
           pip install -r requirements.txt
-          rfbrowser init
 
       - name: Run smoke tests
         run: |
-          robot -d output -i smoke --variable API_BASE_URL:http://localhost:8091 tests
+          # REQUIRE_API makes an unreachable API fail the job instead of
+          # skipping every test and reporting green.
+          robot -d output -i smoke \
+            --variable API_BASE_URL:http://localhost:8091 \
+            --variable REQUIRE_API:true \
+            tests
 
       - name: Upload artifacts
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: robot-output

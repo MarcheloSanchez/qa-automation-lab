@@ -14,7 +14,7 @@ class LoginApiHandler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self) -> None:
-        if self.path == "/health":
+        if self.path == "/status":
             self._send_json(200, {"status": "ok"})
             return
         self._send_json(404, {"error": "not found"})

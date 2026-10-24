@@ -9,16 +9,15 @@ Suite Teardown   Stop Mock API
 ${LOGIN_HELPER}       ${CURDIR}/pst_login_api_check.py
 ${MOCK_SERVER}        ${CURDIR}/mock_login_api_server.py
 ${API_BASE_URL}       http://127.0.0.1:8899
-${HEALTH_URL}         ${API_BASE_URL}/health
 ${VALID_PASSWORD}     welcome01
 
 *** Test Cases ***
 Reachability Returns Success For Healthy Endpoint
-    ${result}=    Run Process    python    ${LOGIN_HELPER}    --mode    reachability    --base-url    ${HEALTH_URL}
+    ${result}=    Run Process    python    ${LOGIN_HELPER}    --mode    reachability    --base-url    ${API_BASE_URL}
     Should Be Equal As Integers    ${result.rc}    0
 
 Reachability Returns Failure For Unavailable Endpoint
-    ${result}=    Run Process    python    ${LOGIN_HELPER}    --mode    reachability    --base-url    http://127.0.0.1:8999/health
+    ${result}=    Run Process    python    ${LOGIN_HELPER}    --mode    reachability    --base-url    http://127.0.0.1:8999
     Should Be Equal As Integers    ${result.rc}    1
 
 Login With Access Token Response
