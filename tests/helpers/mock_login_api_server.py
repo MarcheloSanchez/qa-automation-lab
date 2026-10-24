@@ -13,13 +13,13 @@ class LoginApiHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def do_GET(self) -> None:  # noqa: N802
+    def do_GET(self) -> None:
         if self.path == "/health":
             self._send_json(200, {"status": "ok"})
             return
         self._send_json(404, {"error": "not found"})
 
-    def do_POST(self) -> None:  # noqa: N802
+    def do_POST(self) -> None:
         if self.path != "/users/login":
             self._send_json(404, {"error": "not found"})
             return
@@ -43,7 +43,7 @@ class LoginApiHandler(BaseHTTPRequestHandler):
 
         self._send_json(401, {"error": "invalid credentials"})
 
-    def log_message(self, format: str, *args) -> None:  # noqa: A003
+    def log_message(self, format: str, *args) -> None:
         return
 
 
