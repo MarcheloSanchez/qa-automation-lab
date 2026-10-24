@@ -17,6 +17,13 @@ class LoginApiHandler(BaseHTTPRequestHandler):
         if self.path == "/status":
             self._send_json(200, {"status": "ok"})
             return
+        if self.path == "/users/me":
+            auth = self.headers.get("Authorization", "")
+            if not auth.startswith("Bearer "):
+                self._send_json(401, {"message": "Unauthenticated."})
+                return
+            self._send_json(200, {"id": "1", "token_seen": auth.removeprefix("Bearer ")})
+            return
         self._send_json(404, {"error": "not found"})
 
     def do_POST(self) -> None:

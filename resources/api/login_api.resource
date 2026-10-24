@@ -1,14 +1,11 @@
 *** Settings ***
-Library     Process
 Resource    ../variables/env.resource
-
-*** Variables ***
-${LOGIN_HELPER}    ${CURDIR}/../../tests/helpers/pst_login_api_check.py
+Library     PstApi.py    ${API_BASE_URL}
 
 *** Keywords ***
 Skip If Api Is Unreachable
-    ${check}=    Run Process    python    ${LOGIN_HELPER}    --mode    reachability    --base-url    ${API_BASE_URL}
-    IF    ${check.rc} != 0
+    ${reachable}=    Api Is Reachable
+    IF    not ${reachable}
         IF    $REQUIRE_API.lower() == 'true'
             Fail    Practice Software Testing API at ${API_BASE_URL} is not reachable (REQUIRE_API=true).
         END
@@ -17,17 +14,11 @@ Skip If Api Is Unreachable
 
 Execute Login Request
     [Arguments]    ${email}    ${password}
-    ${response}=    Run Process
-    ...    python
-    ...    ${LOGIN_HELPER}
-    ...    --mode
-    ...    login
-    ...    --base-url
-    ...    ${API_BASE_URL}
-    ...    --email
-    ...    ${email}
-    ...    --password
-    ...    ${password}
-    Should Be Equal As Integers    ${response.rc}    0
-    ${parsed}=    Evaluate    json.loads(r'''${response.stdout}''')    modules=json
-    RETURN    ${parsed}
+    ${result}=    Login Request    ${email}    ${password}
+    RETURN    ${result}
+
+Get Current User
+    [Arguments]    ${token}
+    ${response}=    Api Request    GET    /users/me    token=${token}
+    Should Be Equal As Integers    ${response}[status_code]    200
+    RETURN    ${response}[json]

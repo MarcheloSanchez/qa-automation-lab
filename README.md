@@ -6,7 +6,10 @@ Robot Framework ukázkový projekt pro testování přihlášení přes API.
 
 - `tests/smoke/login.robot` – smoke testy přihlašovacího API.
 - `tests/smoke/login_security.robot` – testy cílené na známé chyby verze `sprint5-with-bugs` (tag `bug:<id>`).
-- `resources/api/login_api.resource` – sdílené keywords pro volání login API.
+- `tests/smoke/authorization.robot` – autorizační testy (OWASP API) cílené na známé chyby (tag `bug:<id>`).
+- `tests/helpers/pst_api_library.robot` – offline testy knihovny `PstApi.py` proti mock API.
+- `resources/api/PstApi.py` – Python keyword knihovna pro API (jedna HTTP session, bearer tokeny).
+- `resources/api/login_api.resource` – sdílené keywords pro login nad `PstApi.py`.
 - `scripts/start_app.sh` – spustí aplikaci ze submodulu a naplní databázi (`SPRINT=sprint5-with-bugs` pro verzi s chybami).
 - `scripts/bug_scorecard.py` – z `output.xml` vyhodnotí, které známé chyby testy odhalily.
 - `tests/helpers/login_api_helper.robot` – stabilní lokální Robot testy helper skriptu `pst_login_api_check.py`.
@@ -53,7 +56,7 @@ robot -d output -i smoke --nostatusrc --variable API_BASE_URL:http://localhost:8
 python scripts/bug_scorecard.py output/output.xml app/practice-software-testing/sprint5-with-bugs/testSessions/listOfBugs.md
 ```
 
-V CI to dělá workflow `Bug Check` (ručně a jednou týdně).
+V CI to dělá workflow `Bug Check` (ručně, jednou týdně a u PR, které mění testy).
 
 ## Lint
 

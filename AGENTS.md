@@ -9,7 +9,11 @@ Robot Framework lab testing [Practice Software Testing](https://github.com/tests
   `resources/variables/env.resource` and are overridden with `--variable`.
 - `tests/helpers/` – Python helper scripts plus `login_api_helper.robot`, which tests them against
   `mock_login_api_server.py` on `127.0.0.1:8899`. Fully offline.
-- `resources/pages/` – page-object keywords (Browser library). `resources/variables/` – shared variables.
+- `resources/api/` – `PstApi.py` keyword library (one HTTP session, bearer tokens: `Api Request`,
+  `Login Request`, `Get Token`) and `login_api.resource` built on it. Use these for new API tests;
+  `tests/helpers/pst_login_api_check.py` is the old subprocess helper.
+- `resources/pages/` – page-object keywords (Browser library). `resources/variables/` – shared variables
+  (incl. seeded customer and admin credentials).
 
 ## Commands
 
@@ -60,7 +64,8 @@ Seeded customer: `customer@practicesoftwaretesting.com` / `welcome01`.
 
 - One roadmap item per branch and PR; keep PRs small. Never push to `main`.
 - CI: `checks.yml` (lint + helper suite, offline) and `pr-smoke.yml` (smoke suite against the
-  Docker app). Both must be green before merge. `bugcheck.yml` (manual + weekly) runs the smoke
-  suite against `sprint5-with-bugs` and publishes the `scripts/bug_scorecard.py` report.
+  Docker app). Both must be green before merge. `bugcheck.yml` (manual, weekly, and on PRs that
+  touch tests) runs the smoke suite against `sprint5-with-bugs` and publishes the
+  `scripts/bug_scorecard.py` report in the job summary.
 - Before touching `pr-smoke.yml`, check open PRs and `claude/*` / `codex/*` branches - CI fixes
   have been attempted in parallel before.
