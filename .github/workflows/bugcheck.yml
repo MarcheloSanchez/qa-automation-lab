@@ -1,0 +1,55 @@
+name: Bug Check
+
+# Runs the API suites against the app's sprint5-with-bugs version and reports
+# which known defects (tests tagged bug:<id>) were detected. Failing tests are
+# the expected outcome here, so the job itself only fails if the run breaks.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 3 * * 1'
+
+jobs:
+  bugcheck:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Start app (with bugs)
+        run: bash scripts/start_app.sh
+        env:
+          SPRINT: sprint5-with-bugs
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      # Untagged smoke tests run too, as controls for the scorecard.
+      - name: Run smoke and bug-targeted tests
+        run: |
+          robot -d output -i smoke --nostatusrc \
+            --variable API_BASE_URL:http://localhost:8091 \
+            --variable REQUIRE_API:true \
+            tests
+
+      - name: Scorecard
+        run: |
+          python scripts/bug_scorecard.py output/output.xml \
+            app/practice-software-testing/sprint5-with-bugs/testSessions/listOfBugs.md \
+            > scorecard.md || status=$?
+          cat scorecard.md | tee -a "$GITHUB_STEP_SUMMARY"
+          exit "${status:-0}"
+
+      - name: Upload Robot output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: robot-bugcheck-output
+          path: output
