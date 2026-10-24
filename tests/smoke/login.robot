@@ -18,13 +18,16 @@ Login API With Invalid Credentials Is Rejected
     [Tags]    smoke    login
     Skip If Api Is Unreachable
     ${result}=    Execute Login Request    ${INVALID_EMAIL}    ${INVALID_PASSWORD}
-    ${allowed}=    Create List    400    401    422
+    ${allowed}=    Create List    ${400}    ${401}    ${422}
     List Should Contain Value    ${allowed}    ${result}[status_code]
 
 *** Keywords ***
 Skip If Api Is Unreachable
     ${check}=    Run Process    python    ${LOGIN_HELPER}    --mode    reachability    --base-url    ${API_BASE_URL}
     IF    ${check.rc} != 0
+        IF    $REQUIRE_API.lower() == 'true'
+            Fail    Practice Software Testing API at ${API_BASE_URL} is not reachable (REQUIRE_API=true).
+        END
         Skip    Practice Software Testing API is not reachable from this environment.
     END
 

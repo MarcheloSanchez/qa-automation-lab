@@ -28,6 +28,13 @@ Pouze smoke sada:
 robot -i smoke tests
 ```
 
+Smoke sada proti lokální instanci aplikace (viz `AGENTS.md`, sekce *Running the app locally*).
+`REQUIRE_API:true` způsobí, že nedostupné API test shodí místo přeskočení (takto běží CI):
+
+```bash
+robot -i smoke --variable API_BASE_URL:http://localhost:8091 --variable REQUIRE_API:true tests
+```
+
 Helper sada (lokální mock API):
 
 ```bash

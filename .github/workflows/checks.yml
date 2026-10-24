@@ -1,0 +1,37 @@
+name: Checks
+
+# Fast, offline checks that need neither the Docker app nor network access.
+# The smoke suite against the self-hosted app lives in pr-smoke.yml.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  lint-and-helpers:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Helper suite (local mock API)
+        run: robot -d output tests/helpers
+
+      - name: Upload Robot report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: robot-helpers-output
+          path: output
