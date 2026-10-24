@@ -7,5 +7,7 @@ ${BROWSER}           chromium
 ${HEADLESS}          true
 ${VALID_EMAIL}       customer@practicesoftwaretesting.com
 ${VALID_PASSWORD}    welcome01
+${ADMIN_EMAIL}       admin@practicesoftwaretesting.com
+${ADMIN_PASSWORD}    welcome01
 ${INVALID_EMAIL}     wrong@test.com
 ${INVALID_PASSWORD}  wrongpass
