@@ -48,6 +48,15 @@ Api Request Without Token Is Unauthenticated
     ${response}=    Api.Api Request    GET    users/me
     Should Be Equal As Integers    ${response}[status_code]    401
 
+Decode Jwt Claims Reads The Payload
+    # header.payload.signature with payload {"iat": 100, "exp": 400}
+    ${claims}=    Api.Decode Jwt Claims    eyJhbGciOiJIUzI1NiJ9.eyJpYXQiOjEwMCwiZXhwIjo0MDB9.sig
+    Should Be Equal As Integers    ${claims}[exp]    400
+    Should Be Equal As Integers    ${claims}[iat]    100
+
+Decode Jwt Claims Rejects Non Jwt
+    Run Keyword And Expect Error    Not a JWT:*    Api.Decode Jwt Claims    access-token-value
+
 *** Keywords ***
 Start Mock API
     Start Process    python    ${MOCK_SERVER}    alias=mock_api
