@@ -32,6 +32,28 @@ Customer Cannot Delete A Brand
     Should Be Equal As Integers    ${still_there}[status_code]    200
     [Teardown]    Delete Brand As Admin    ${brand}
 
+Customer Sees Only Own Invoices
+    [Tags]    smoke    authorization    security    bug:78
+    Skip If Api Is Unreachable
+    ${token}=    Get Token    ${VALID_EMAIL}    ${VALID_PASSWORD}
+    ${me}=    Get Current User    ${token}
+    ${response}=    Api Request    GET    /invoices    token=${token}
+    Should Be Equal As Integers    ${response}[status_code]    200
+    FOR    ${invoice}    IN    @{response}[json][data]
+        Should Be Equal As Strings    ${invoice}[user_id]    ${me}[id]
+        ...    Invoice ${invoice}[id] belongs to user ${invoice}[user_id], not to ${me}[id].
+    END
+
+Admin Only Action Returns Forbidden For Customer
+    [Documentation]    Authenticated but lacking the role is 403, not 401.
+    [Tags]    smoke    authorization    security    bug:83
+    Skip If Api Is Unreachable
+    ${token}=    Get Token    ${VALID_EMAIL}    ${VALID_PASSWORD}
+    ${other_token}=    Get Token    ${OTHER_EMAIL}    ${VALID_PASSWORD}
+    ${other}=    Get Current User    ${other_token}
+    ${response}=    Api Request    DELETE    /users/${other}[id]    token=${token}
+    Should Be Equal As Integers    ${response}[status_code]    403
+
 *** Keywords ***
 Create Throwaway Brand
     ${slug}=    Evaluate    f"qa-lab-{uuid.uuid4().hex[:12]}"    modules=uuid

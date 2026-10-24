@@ -6,6 +6,8 @@ supports bearer tokens, and returns plain dicts Robot can assert on.
 
 from __future__ import annotations
 
+import base64
+import json as jsonlib
 from typing import Any
 
 import requests
@@ -74,3 +76,13 @@ class PstApi:
         if result["status_code"] != 200 or not result["token"]:
             raise AssertionError(f"Login as {email} failed with HTTP {result['status_code']}.")
         return result["token"]
+
+    @keyword
+    def decode_jwt_claims(self, token: str) -> dict[str, Any]:
+        """Return the JWT payload without verifying the signature (inspection only)."""
+        try:
+            payload = token.split(".")[1]
+            payload += "=" * (-len(payload) % 4)
+            return jsonlib.loads(base64.urlsafe_b64decode(payload))
+        except (IndexError, ValueError) as error:
+            raise AssertionError(f"Not a JWT: {token[:20]}...") from error
