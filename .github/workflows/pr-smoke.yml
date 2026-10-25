@@ -39,3 +39,36 @@ jobs:
         with:
           name: robot-output
           path: output
+
+  ui:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Start app (with UI)
+        run: bash scripts/start_app.sh
+        env:
+          WAIT_FOR_UI: 'true'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: |
+          pip install -r requirements.txt
+          rfbrowser init chromium
+
+      - name: Run UI tests
+        run: robot -d output --variable BASE_URL:http://localhost:4200 tests/ui
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: robot-ui-output
+          path: output
