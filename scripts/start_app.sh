@@ -9,19 +9,26 @@ cd "$(dirname "$0")/../app/practice-software-testing"
 export SPRINT="${SPRINT:-sprint5}"
 echo "Starting app version: $SPRINT"
 
-# api.docker hardcodes 'usermod -u 1000 www-data' so php-fpm's
-# user matches a typical local dev machine's own UID on a
-# bind-mounted volume. GitHub Actions runners check out the repo
-# under a different UID, so www-data can't write to the
-# bind-mounted storage/ (logs, cache, sessions) - Laravel then
-# fails every request that needs to write there.
-chmod -R 777 "$SPRINT/API/storage" "$SPRINT/API/bootstrap/cache"
-
 docker compose up -d
 
 # 'cron' runs the app's scheduler every minute against the same
 # database; CI doesn't need it and it can race migrate:fresh.
 docker compose stop cron
+
+# The 'composer' service installs vendor/ into the shared API volume and then
+# runs 'chown -R www-data' with the composer image's www-data uid, which is not
+# php-fpm's (api.docker sets it to 1000). Until it has finished, the API has no
+# dependencies; if its chown lands after Laravel created storage/ files, php-fpm
+# can't write its log and every request fails with an almost empty 500. So wait
+# for it, then make storage/ writable from inside the API container, as root.
+echo "Waiting for composer install to finish ..."
+composer_exit=$(docker wait "$(docker compose ps -aq composer)")
+if [ "$composer_exit" != 0 ]; then
+  echo "composer install failed (exit $composer_exit)." >&2
+  docker compose logs composer
+  exit 1
+fi
+docker compose exec -T -u root laravel-api chmod -R a+rwX storage bootstrap/cache
 
 echo "Waiting for the API to become ready on http://localhost:8091/status ..."
 ready=false
@@ -63,6 +70,27 @@ if [ "$migrated" != true ]; then
   exit 1
 fi
 
+# /status answering is not enough: require a real data endpoint, and if it
+# fails show why (response body, Laravel's log and its permissions).
+api_ok=false
+for i in $(seq 1 12); do
+  code=$(curl -s -o /tmp/products.json -w '%{http_code}' -H 'Accept: application/json' http://localhost:8091/products)
+  echo "API /products: HTTP $code (attempt $i)"
+  if [ "$code" = 200 ]; then
+    api_ok=true
+    break
+  fi
+  sleep 5
+done
+if [ "$api_ok" != true ]; then
+  echo "--- last /products body:"; head -c 2000 /tmp/products.json; echo
+  echo "--- laravel.log (tail):"
+  docker compose exec -T laravel-api sh -c 'tail -n 60 storage/logs/laravel.log; ls -la storage storage/logs' || true
+  docker compose ps -a
+  docker compose logs --tail=80 laravel-api web composer
+  exit 1
+fi
+
 # The UI (ng serve) builds long after the API is up. Requesting the login route
 # also warms it up, so the first UI test isn't spent on lazy compilation.
 if [ "${WAIT_FOR_UI:-false}" = true ]; then
@@ -78,28 +106,6 @@ if [ "${WAIT_FOR_UI:-false}" = true ]; then
   if [ "$ui_ready" != true ]; then
     echo "UI did not become ready in time." >&2
     docker compose logs angular-ui
-    exit 1
-  fi
-
-  # UI tests need data from the API, not just /status. Seen in CI: a 500
-  # with a 5-byte body shortly after startup; allow a warm-up, then show
-  # the body and Laravel's own log if it persists.
-  api_ok=false
-  for i in $(seq 1 12); do
-    code=$(curl -s -o /tmp/products.json -w '%{http_code}' -H 'Accept: application/json' http://localhost:8091/products)
-    echo "API /products: HTTP $code (attempt $i)"
-    if [ "$code" = 200 ]; then
-      api_ok=true
-      break
-    fi
-    sleep 5
-  done
-  if [ "$api_ok" != true ]; then
-    echo "--- last /products body:"; head -c 2000 /tmp/products.json; echo
-    echo "--- laravel.log (tail):"
-    docker compose exec -T laravel-api sh -c 'tail -n 60 storage/logs/laravel.log; ls -la storage/logs' || true
-    docker compose ps
-    docker compose logs --tail=80 laravel-api web
     exit 1
   fi
 fi
