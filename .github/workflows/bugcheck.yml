@@ -92,9 +92,11 @@ jobs:
 
       - name: Run UI tests
         run: |
+          # sprint5-with-bugs uses Angular hash routing (/#/auth/login ...).
           robot -d output --nostatusrc \
             --variable BASE_URL:http://localhost:4200 \
             --variable API_BASE_URL:http://localhost:8091 \
+            --variable ROUTE_PREFIX:/# \
             tests/ui
 
       - name: Scorecard

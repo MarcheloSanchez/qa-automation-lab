@@ -18,6 +18,7 @@ ${SEARCH_BUTTON}    css=button[type="submit"][data-test="search-submit"]
 ${SORT_SELECT}      css=[data-test="sort"]
 ${SORT_HEADING}     xpath=//select[@data-test="sort"]/preceding::h4[1]
 ${PRODUCT_NAMES}    css=[data-test="product-name"]
+${ADD_TO_CART}      css=[data-test="add-to-cart"]
 
 *** Test Cases ***
 Home Link Points To The Home Page
@@ -47,6 +48,9 @@ Related Products Heading Is Spelled Correctly
     ...    GET /products returned HTTP ${products}[status_code], headers: ${products}[headers]
     ${first}=    Set Variable    ${products}[json][data][0]
     Open Storefront Page    /product/${first}[id]
+    # Fail fast if this isn't the detail page; otherwise a wrong page would
+    # also "lack" the heading and count as caught.
+    Wait For Elements State    ${ADD_TO_CART}    visible    timeout=30s
     Get Text    body    contains    Related products
 
 Name A To Z Sorts Category Ascending
@@ -57,13 +61,16 @@ Name A To Z Sorts Category Ascending
     ${request}=    Promise To    Wait For Response    matcher=/sort=name/    timeout=15s
     Select Options By    ${SORT_SELECT}    label    Name (A - Z)
     ${response}=    Wait For    ${request}
+    # by_category_slug proves the request came from the category page (the
+    # overview page has its own sort select).
+    Should Contain    ${response}[url]    by_category_slug=hand-tools
     Should Match Regexp    ${response}[url]    sort=name(,|%2C)asc
     Wait Until Keyword Succeeds    10s    500ms    Product Names Should Be Sorted Ascending
 
 *** Keywords ***
 Open Storefront Page
     [Arguments]    ${path}
-    New Page    ${BASE_URL}${path}
+    New Page    ${BASE_URL}${ROUTE_PREFIX}${path}
     # ng serve compiles routes lazily; the first visit can be slow.
     Wait For Load State    networkidle    timeout=60s
 

@@ -55,6 +55,9 @@ Seeded customer: `customer@practicesoftwaretesting.com` / `welcome01`.
   `app/practice-software-testing/sprint5-with-bugs/testSessions/listOfBugs.md`). It must assert
   the *correct* behaviour, so it passes on `sprint5` and fails on the buggy version. Check the
   buggy source before tagging - not every listed bug is present in the current code (e.g. #21).
+- UI navigation goes through `${ROUTE_PREFIX}` (`/#` for `sprint5-with-bugs`, which uses hash routing).
+  A bug test must first prove it reached the right page (an element or request unique to it), or a
+  wrong page counts as "caught".
 - Selectors in `bug:<id>` tests must match exactly one element in **both** versions (Browser runs in
   strict mode). A test that errors on the buggy version counts as "caught" for the wrong reason.
 - Shared keywords go in `resources/`, not copied between suites.
