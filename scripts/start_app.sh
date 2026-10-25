@@ -81,10 +81,23 @@ if [ "${WAIT_FOR_UI:-false}" = true ]; then
     exit 1
   fi
 
-  # The UI build is heavy; make sure the API still serves data afterwards.
-  code=$(curl -s -o /dev/null -w '%{http_code}' -H 'Accept: application/json' http://localhost:8091/products)
-  echo "API /products after UI start: HTTP $code"
-  if [ "$code" != 200 ]; then
+  # UI tests need data from the API, not just /status. Seen in CI: a 500
+  # with a 5-byte body shortly after startup; allow a warm-up, then show
+  # the body and Laravel's own log if it persists.
+  api_ok=false
+  for i in $(seq 1 12); do
+    code=$(curl -s -o /tmp/products.json -w '%{http_code}' -H 'Accept: application/json' http://localhost:8091/products)
+    echo "API /products: HTTP $code (attempt $i)"
+    if [ "$code" = 200 ]; then
+      api_ok=true
+      break
+    fi
+    sleep 5
+  done
+  if [ "$api_ok" != true ]; then
+    echo "--- last /products body:"; head -c 2000 /tmp/products.json; echo
+    echo "--- laravel.log (tail):"
+    docker compose exec -T laravel-api sh -c 'tail -n 60 storage/logs/laravel.log; ls -la storage/logs' || true
     docker compose ps
     docker compose logs --tail=80 laravel-api web
     exit 1
