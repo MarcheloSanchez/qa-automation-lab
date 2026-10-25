@@ -30,6 +30,12 @@ for i in $(seq 1 30); do
     ready=true
     break
   fi
+  # nginx ("web") exits at startup if the phpmyadmin container isn't in
+  # Docker's DNS yet ("host not found in upstream"). Start it again.
+  if ! docker compose ps --status running --services | grep -qx web; then
+    echo "web (nginx) is not running, starting it again ..."
+    docker compose up -d web
+  fi
   sleep 5
 done
 if [ "$ready" != true ]; then
