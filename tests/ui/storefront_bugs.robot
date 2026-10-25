@@ -43,6 +43,8 @@ Search Button Is Spelled Correctly
 Related Products Heading Is Spelled Correctly
     [Tags]    ui    products    bug:42
     ${products}=    Api Request    GET    /products
+    Should Be Equal As Integers    ${products}[status_code]    200
+    ...    GET /products returned HTTP ${products}[status_code], headers: ${products}[headers]
     ${first}=    Set Variable    ${products}[json][data][0]
     Open Storefront Page    /product/${first}[id]
     Get Text    body    contains    Related products

@@ -74,4 +74,13 @@ if [ "${WAIT_FOR_UI:-false}" = true ]; then
     docker compose logs angular-ui
     exit 1
   fi
+
+  # The UI build is heavy; make sure the API still serves data afterwards.
+  code=$(curl -s -o /dev/null -w '%{http_code}' -H 'Accept: application/json' http://localhost:8091/products)
+  echo "API /products after UI start: HTTP $code"
+  if [ "$code" != 200 ]; then
+    docker compose ps
+    docker compose logs --tail=80 laravel-api web
+    exit 1
+  fi
 fi

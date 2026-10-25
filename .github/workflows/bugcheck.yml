@@ -112,3 +112,10 @@ jobs:
         with:
           name: robot-bugcheck-ui-output
           path: output
+
+      - name: Dump app logs on failure
+        if: failure()
+        run: |
+          cd app/practice-software-testing
+          docker compose ps
+          docker compose logs --tail=100 laravel-api web

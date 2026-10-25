@@ -11,9 +11,9 @@ Test Setup        Open Login Page
 Successful Login Leaves The Login Page
     [Tags]    ui    login
     Login With Credentials    ${VALID_EMAIL}    ${VALID_PASSWORD}
-    # The app redirects with a full page navigation; Get Url retries the
-    # assertion until Browser's timeout instead of reading it once.
-    Get Url    not contains    /login
+    # The redirect is a full page navigation after the login request; wait
+    # for it explicitly (a plain Get Url assertion checks only once).
+    Wait For Condition    Url    not contains    /login    timeout=15s
 
 Invalid Login Shows Error Message
     [Tags]    ui    login
