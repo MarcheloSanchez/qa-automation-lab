@@ -8,6 +8,7 @@ Robot Framework ukázkový projekt pro testování přihlášení přes API.
 - `tests/smoke/login_security.robot` – testy cílené na známé chyby verze `sprint5-with-bugs` (tag `bug:<id>`).
 - `tests/smoke/authorization.robot` – autorizační testy (OWASP API) cílené na známé chyby (tag `bug:<id>`).
 - `tests/smoke/data_exposure.robot` – testy úniku dat z API (citlivá pole, logy, odhadnutelná ID).
+- `tests/ui/storefront_bugs.robot` – UI testy cílené na známé chyby obchodu (překlepy, odkazy, řazení; tag `bug:<id>`).
 - `tests/ui/login.robot` – UI testy přihlášení (Browser library) proti `${BASE_URL}`; v CI proti lokální aplikaci (port 4200).
 - `resources/pages/` – page objecty (`login.resource`) a sdílené keywords prohlížeče (`common.resource`).
 - `tests/helpers/pst_api_library.robot` – offline testy knihovny `PstApi.py` proti mock API.
@@ -65,7 +66,7 @@ UI testy (vyžadují `rfbrowser init` a běžící UI):
 
 ```bash
 WAIT_FOR_UI=true scripts/start_app.sh
-robot -d output --variable BASE_URL:http://localhost:4200 tests/ui
+robot -d output --variable BASE_URL:http://localhost:4200 --variable API_BASE_URL:http://localhost:8091 tests/ui
 ```
 
 ## Lint
