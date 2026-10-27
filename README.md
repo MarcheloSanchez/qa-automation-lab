@@ -9,8 +9,9 @@ Robot Framework ukázkový projekt pro testování přihlášení přes API.
 - `tests/smoke/authorization.robot` – autorizační testy (OWASP API) cílené na známé chyby (tag `bug:<id>`).
 - `tests/smoke/data_exposure.robot` – testy úniku dat z API (citlivá pole, logy, odhadnutelná ID).
 - `tests/ui/storefront_bugs.robot` – UI testy cílené na známé chyby obchodu (překlepy, odkazy, řazení; tag `bug:<id>`).
+- `tests/ui/product_and_account_bugs.robot` – UI testy chyb na detailu produktu, v košíku a v profilu (tag `bug:<id>`).
 - `tests/ui/login.robot` – UI testy přihlášení (Browser library) proti `${BASE_URL}`; v CI proti lokální aplikaci (port 4200).
-- `resources/pages/` – page objecty (`login.resource`) a sdílené keywords prohlížeče (`common.resource`).
+- `resources/pages/` – page objecty (`login.resource`, `product.resource`) a sdílené keywords prohlížeče (`common.resource`).
 - `tests/helpers/pst_api_library.robot` – offline testy knihovny `PstApi.py` proti mock API.
 - `resources/api/PstApi.py` – Python keyword knihovna pro API (jedna HTTP session, bearer tokeny).
 - `resources/api/login_api.resource` – sdílené keywords pro login nad `PstApi.py`.
