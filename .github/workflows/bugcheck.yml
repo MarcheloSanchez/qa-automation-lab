@@ -11,6 +11,7 @@ on:
   pull_request:
     paths:
       - 'tests/smoke/**'
+      - 'tests/ui/**'
       - 'resources/**'
       - 'scripts/bug_scorecard.py'
       - 'scripts/start_app.sh'
@@ -62,3 +63,61 @@ jobs:
         with:
           name: robot-bugcheck-output
           path: output
+
+  # UI defects get their own job and scorecard: if the UI controls (login
+  # tests) fail on the buggy version, only this scorecard is marked invalid.
+  bugcheck-ui:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Start app (with bugs, with UI)
+        run: bash scripts/start_app.sh
+        env:
+          SPRINT: sprint5-with-bugs
+          WAIT_FOR_UI: 'true'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: |
+          pip install -r requirements.txt
+          rfbrowser init chromium
+
+      - name: Run UI tests
+        run: |
+          # sprint5-with-bugs uses Angular hash routing (/#/auth/login ...).
+          robot -d output --nostatusrc \
+            --variable BASE_URL:http://localhost:4200 \
+            --variable API_BASE_URL:http://localhost:8091 \
+            --variable ROUTE_PREFIX:/# \
+            tests/ui
+
+      - name: Scorecard
+        run: |
+          python scripts/bug_scorecard.py output/output.xml \
+            app/practice-software-testing/sprint5-with-bugs/testSessions/listOfBugs.md \
+            > scorecard.md || status=$?
+          sed -i 's/^## Bug scorecard (sprint5-with-bugs)$/## Bug scorecard: UI (sprint5-with-bugs)/' scorecard.md
+          cat scorecard.md | tee -a "$GITHUB_STEP_SUMMARY"
+          exit "${status:-0}"
+
+      - name: Upload Robot output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: robot-bugcheck-ui-output
+          path: output
+
+      - name: Dump app logs on failure
+        if: failure()
+        run: |
+          cd app/practice-software-testing
+          docker compose ps
+          docker compose logs --tail=100 laravel-api web

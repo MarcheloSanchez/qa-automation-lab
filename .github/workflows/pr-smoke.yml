@@ -64,7 +64,11 @@ jobs:
           rfbrowser init chromium
 
       - name: Run UI tests
-        run: robot -d output --variable BASE_URL:http://localhost:4200 tests/ui
+        run: |
+          robot -d output \
+            --variable BASE_URL:http://localhost:4200 \
+            --variable API_BASE_URL:http://localhost:8091 \
+            tests/ui
 
       - name: Upload artifacts
         if: always()
@@ -72,3 +76,10 @@ jobs:
         with:
           name: robot-ui-output
           path: output
+
+      - name: Dump app logs on failure
+        if: failure()
+        run: |
+          cd app/practice-software-testing
+          docker compose ps
+          docker compose logs --tail=100 laravel-api web

@@ -12,8 +12,10 @@ Robot Framework lab testing [Practice Software Testing](https://github.com/tests
 - `resources/api/` – `PstApi.py` keyword library (one HTTP session, bearer tokens: `Api Request`,
   `Login Request`, `Get Token`) and `login_api.resource` built on it. Use these for new API tests;
   `tests/helpers/pst_login_api_check.py` is the old subprocess helper.
-- `tests/ui/` – Browser-library UI suites (tag `ui`, not `smoke`, so Bug Check doesn't use them as
-  controls). Run with `--variable BASE_URL:http://localhost:4200` after `WAIT_FOR_UI=true scripts/start_app.sh`.
+- `tests/ui/` – Browser-library UI suites (tag `ui`, not `smoke`). Bug Check scores them in a separate
+  `bugcheck-ui` job, where the untagged UI tests (login) are the controls. Run with
+  `--variable BASE_URL:http://localhost:4200 --variable API_BASE_URL:http://localhost:8091` after
+  `WAIT_FOR_UI=true scripts/start_app.sh`.
 - `resources/pages/` – page-object keywords (Browser library). `resources/variables/` – shared variables
   (incl. seeded customer and admin credentials).
 
@@ -53,6 +55,11 @@ Seeded customer: `customer@practicesoftwaretesting.com` / `welcome01`.
   `app/practice-software-testing/sprint5-with-bugs/testSessions/listOfBugs.md`). It must assert
   the *correct* behaviour, so it passes on `sprint5` and fails on the buggy version. Check the
   buggy source before tagging - not every listed bug is present in the current code (e.g. #21).
+- UI navigation goes through `${ROUTE_PREFIX}` (`/#` for `sprint5-with-bugs`, which uses hash routing).
+  A bug test must first prove it reached the right page (an element or request unique to it), or a
+  wrong page counts as "caught".
+- Selectors in `bug:<id>` tests must match exactly one element in **both** versions (Browser runs in
+  strict mode). A test that errors on the buggy version counts as "caught" for the wrong reason.
 - Shared keywords go in `resources/`, not copied between suites.
 - Compare status codes as numbers (`${401}`), not strings.
 - Python: must pass `ruff check .`; type-hint new functions.

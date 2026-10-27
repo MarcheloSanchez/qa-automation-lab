@@ -10,7 +10,7 @@ ${ERROR_MESSAGE}     css=[data-test="login-error"]
 
 *** Keywords ***
 Open Login Page
-    New Page    ${BASE_URL}/auth/login
+    New Page    ${BASE_URL}${ROUTE_PREFIX}/auth/login
     # ng serve compiles routes lazily, so the first render on a cold dev
     # server can exceed Browser's default 10s timeout.
     Wait For Elements State    ${EMAIL_INPUT}    visible    timeout=60s
